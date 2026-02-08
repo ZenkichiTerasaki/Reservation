@@ -1,0 +1,30 @@
+version: "3.9" #composeファイルのバージョン
+
+services:
+  db: #db用コンテナ
+    image: postgres:16 #使用するデータベース(PostgreSQL 16)
+    container_name: reservation_db #コンテナ名
+    environment: #環境変数
+      POSTGRES_USER: postgres #DBユーザー名
+      POSTGRES_PASSWORD: postgres #DBパスワード
+      POSTGRES_DB: reservation #初期DB名
+    ports:
+      - "5432:5432" #ホスト
+    volumes:
+      - pgdata:/var/lib/postgresql/data #データの保存先(コンテナを削除しても残る)
+
+  api: #NestJS APIコンテナ
+    build: ./backend #backend/Dockerfile でビルド
+    container_name: reservation_api #コンテナ名
+    volumes:
+      - ./backend:/app # ローカルのコードをコンテナに反映
+    ports:
+      - "3000:3000" #APIをローカルホスト:3000で公開
+      - "5555:5555"
+    depends_on:
+      - db # DB起動後にapiを起動
+    environment: #環境変数
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/reservation #接続用文字列
+
+volumes:
+  pgdata: #
